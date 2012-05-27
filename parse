@@ -84,13 +84,12 @@ for email_file in file_list:
 		
 		textbody = ""
 		htmlbody = ""
+		attachment_list = []
 		
 		sha1_hash = hashlib.sha1("%s/%s/%s/%s" % (message['from'], message['to'], message['message-id'], subject)).hexdigest()
 		
 		message_parts = [find_submessages(message)]
 		message_parts = flatten(message_parts)
-		
-		attachment_list = []
 		
 		for part in message_parts:
 			if part.get_filename() is None:
@@ -112,13 +111,11 @@ for email_file in file_list:
 				attachment_extension = os.path.splitext(attachment_filename)[1][1:]
 				attachment_size = len(attachment_data)
 				attachment_destination = "%s/%s.%s" % (options['attachment_dir'], attachment_sha1, attachment_extension)
-				#print "Attachment found of type %s: %s (%s)" % (attachment_type, attachment_filename, attachment_destination)
+				attachment_list.append((attachment_filename, attachment_type, attachment_sha1, attachment_size))
 				
 				attachment_file = open(attachment_destination, "w")
 				attachment_file.write(attachment_data)
 				attachment_file.close()
-				
-				attachment_list.append((attachment_filename, attachment_type, attachment_sha1, attachment_size))
 		
 		timestamp = 0
 		
@@ -130,6 +127,7 @@ for email_file in file_list:
 			for attachment in attachment_list:
 				new_row = (sha1_hash, attachment[0], attachment[1], attachment[2], attachment[3])
 				cursor.execute("INSERT INTO attachments VALUES (?, ?, ?, ?, ?)", new_row)
+				
 			print "Successfully inserted %d attachment(s) for %s." % (len(attachment_list), sha1_hash)
 
 database.commit()
