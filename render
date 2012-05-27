@@ -4,6 +4,12 @@ import os, argparse, hashlib, sqlite3, time
 
 parser = argparse.ArgumentParser(description='Renders static HTML pages and indexes from an SQLite database of emails and an attachment folder.')
 
+parser.add_argument('-o', dest='output_dir', action='store', default='render',
+                   help='path of the directory where rendered files should be stored')
+                   
+parser.add_argument('-t', dest='template_dir', action='store', default='templates',
+                   help='path where the template files are')
+                   
 parser.add_argument('-d', dest='database', action='store', default='emails.db',
                    help='path of the database that should be used to render the e-mail files')
                    
@@ -21,6 +27,11 @@ if os.path.isfile(options['database']) == False:
 database = sqlite3.connect(options['database'])
 cursor = database.cursor()
 
+# Load templates
+template_message = open('%s/message.html' % options['template_dir']).read()
+
 for message in cursor.execute("SELECT * FROM emails"):
 	message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_hash = message
-	
+	generated = template_message % {'subject': subject, 'date': timestamp, 'from': sender, 'to': recipient, 'body': textbody, 'title': "admin@cryto.net", 'version': "Plaintext version"}
+	print generated
+	exit(1)
