@@ -15,6 +15,9 @@ parser.add_argument('-a', dest='attachment_dir', action='store', default='attach
                    
 parser.add_argument('-r', '--render', dest='render', action='store_true',
                    help='render static HTML files using the template files in templates/')
+                   
+parser.add_argument('-f', '--forced', dest='forced', action='store_true',
+                   help='force insertion into database, even if entries already exist')
 
 args = parser.parse_args()
 options = vars(args)
@@ -126,17 +129,28 @@ for email_file in file_list:
 			timestamp = 0
 			print "WARNING: Failed to determine unix timestamp for %s." % sha1_hash
 		
-		new_row = (getheader(message['message-id']), getheader(message['from']), getheader(message['to']), getheader(subject), timestamp, textbody, htmlbody, sha1_hash)
-		cursor.execute("INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_row)
-		
-		print "Successfully parsed and inserted e-mail with SHA1 hash %s." % sha1_hash
+		cursor.execute("SELECT * FROM emails WHERE `Hash` = ?", (sha1_hash,))
+		if len(cursor.fetchall()) == 0 or options['forced'] == True:
+			new_row = (getheader(message['message-id']), getheader(message['from']), getheader(message['to']), getheader(subject), timestamp, textbody, htmlbody, sha1_hash)
+			cursor.execute("INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_row)
+			print "Successfully parsed and inserted e-mail with SHA1 hash %s." % sha1_hash
+		else:
+			print "Skipping %s, already exists in the database." % sha1_hash
 		
 		if len(attachment_list) > 0:
+			inserted = 0
+			
 			for attachment in attachment_list:
-				new_row = (sha1_hash, attachment[0], attachment[1], attachment[2], attachment[3])
-				cursor.execute("INSERT INTO attachments VALUES (?, ?, ?, ?, ?)", new_row)
-				
-			print "Successfully inserted %d attachment(s) for %s." % (len(attachment_list), sha1_hash)
+				cursor.execute("SELECT * FROM attachments WHERE `Hash` = ?", (attachment[2],))
+				if len(cursor.fetchall()) == 0 or options['forced'] == True:
+					new_row = (sha1_hash, attachment[0], attachment[1], attachment[2], attachment[3])
+					cursor.execute("INSERT INTO attachments VALUES (?, ?, ?, ?, ?)", new_row)
+					inserted += 1
+				else:
+					print "Skipping attachment %s, already exists in the database." % attachment[2]
+			
+			if inserted > 0:
+				print "Successfully inserted %d attachment(s) for %s." % (inserted, sha1_hash)
 
 database.commit()
-print "Changes successfully committed to database, exiting..."
+print "Changes successfully committed to database."
