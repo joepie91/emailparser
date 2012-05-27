@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, argparse, hashlib, sqlite3, time, shutil, cgi
+import os, argparse, hashlib, sqlite3, time, shutil, cgi, re
 from datetime import datetime
 
 parser = argparse.ArgumentParser(description='Renders static HTML pages and indexes from an SQLite database of emails and an attachment folder.')
@@ -46,6 +46,8 @@ try:
 	os.makedirs("%s/messages" % options['output_dir'])
 except OSError:
 	pass
+
+email_list = []
 
 for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_hash in cursor.execute("SELECT * FROM emails"):
 	
@@ -121,5 +123,42 @@ for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_
 		generated = template_message % variables
 		open('%s/messages/%s_html.html' % (options['output_dir'], sha1_hash), 'w').write(generated.encode('UTF-8'))
 		print "Successfully generated HTML version of %s." % sha1_hash
-		
+	
+	try:
+		snippet = "%s..." % re.search("^(.{0,200})\\b", textbody, re.DOTALL).group(1)
+	except AttributeError:
+		snippet = ""
+	
+	email_list.append((sha1_hash, available_text, available_html, sender, recipient, subject, timestamp, len(attachment_list), snippet))
+
+# Sort by timestamp, ascending
+sorted_list = sorted(email_list, key=lambda email: email[6].lower())
+
+# Sort by timestamp, descending
+sorted_list.reverse()
+
+# Sort by sender, ascending
+sorted_list = sorted(email_list, key=lambda email: email[3].lower())
+
+# Sort by sender, descending
+sorted_list.reverse()
+
+# Sort by recipient, ascending
+sorted_list = sorted(email_list, key=lambda email: email[4].lower())
+
+# Sort by recipient, descending
+sorted_list.reverse()
+
+# Sort by hash, ascending
+sorted_list = sorted(email_list, key=lambda email: email[0].lower())
+
+# Sort by hash, descending
+sorted_list.reverse()
+
+# Sort by subject, ascending
+sorted_list = sorted(email_list, key=lambda email: email[5].lower())
+
+# Sort by subject, descending
+sorted_list.reverse()
+
 shutil.copy('%s/style.css' % options['template_dir'], '%s/style.css' % options['output_dir'])
