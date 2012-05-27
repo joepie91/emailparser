@@ -14,6 +14,11 @@ pre {
 	word-wrap: break-word;
 }
 
+.clear
+{
+	clear: both;
+}
+
 h1
 {
 	margin: 0px;
@@ -70,4 +75,26 @@ table td.body
 {
 	border: 2px solid #313131;
 	padding: 16px 13px;
+}
+
+.version
+{
+	display: block;
+	margin: 2px 6px 8px 0px;
+	padding: 4px 0px;
+	float: left;
+	font-weight: bold;
+}
+
+a.version
+{
+	padding: 4px 6px;
+	background-color: #464646;
+	color: white;
+	text-decoration: none;
+}
+
+a.version:hover
+{
+	background-color: #333333;
 }
