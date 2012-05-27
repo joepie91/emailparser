@@ -23,14 +23,14 @@ h1
 {
 	margin: 0px;
 	padding: 9px 12px;
-	background-color: #181818;
+	background-color: #181818 !important;
 	color: white;
 }
 
 a.back
 {
 	padding: 7px 12px;
-	color: white;
+	color: white !important;
 	display: block;
 	background-color: #393939;
 }
@@ -94,12 +94,12 @@ table td.body
 a.version
 {
 	padding: 4px 6px;
-	background-color: #464646;
-	color: white;
+	background-color: #464646 !important;
+	color: white !important;
 	text-decoration: none;
 }
 
 a.version:hover
 {
-	background-color: #333333;
+	background-color: #333333 !important;
 }
