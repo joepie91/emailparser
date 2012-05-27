@@ -45,14 +45,14 @@ table.message
 	margin-top: 20px;
 }
 
-table th, table td
+table.message > tbody > tr > th, table.message > tbody > tr > td
 {
 	text-align: left;
 	border: 1px solid #313131;
 	padding: 5px 7px;
 }
 
-table th
+table.message > tbody > tr > th
 {
 	background-color: #313131;
 	color: white;
