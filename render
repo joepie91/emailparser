@@ -61,12 +61,12 @@ for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_
 		# Text version
 		body = "<pre>%s</pre>" % textbody
 		generated = template_message % {'subject': subject, 'date': timestamp, 'from': sender, 'to': recipient, 'body': body, 'title': options['title'], 'version': "Plaintext version", 'index': "../index.html", 'versions': version_list}
-		open('%s/%s_text.html' % (options['output_dir'], sha1_hash), 'w').write(generated.encode('UTF-8'))
+		open('%s/messages/%s_text.html' % (options['output_dir'], sha1_hash), 'w').write(generated.encode('UTF-8'))
 	
 	if available_html == True:
 		# HTML version
 		body = htmlbody
 		generated = template_message % {'subject': subject, 'date': timestamp, 'from': sender, 'to': recipient, 'body': body, 'title': options['title'], 'version': "HTML version", 'index': "../index.html", 'versions': version_list}
-		open('%s/%s_html.html' % (options['output_dir'], sha1_hash), 'w').write(generated.encode('UTF-8'))
+		open('%s/messages/%s_html.html' % (options['output_dir'], sha1_hash), 'w').write(generated.encode('UTF-8'))
 		
 shutil.copy('%s/style.css' % options['template_dir'], '%s/style.css' % options['output_dir'])
