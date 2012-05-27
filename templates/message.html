@@ -1,15 +1,15 @@
 <!doctype html>
 <html>
 	<head>
-		<title>"?subject" from ?from (?date) - ?title</title>
+		<title>"%(subject)s" from %(from)s (%(date)s) - %(title)s</title>
 		<link rel="stylesheet" href="style.css">
 	</head>
 	<body>
 		<h1>?title</h1>
-		<a href="?index" class="back">&lt;&lt; back to index</a>
+		<a href="%(index)s" class="back">&lt;&lt; back to index</a>
 		<div class="main">
-			<h2>?subject</h2>
-			<h3>?version</h3>
+			<h2>%(subject)s</h2>
+			<h3>%(version)s</h3>
 			
 			<table class="message">
 				<tr>
@@ -18,13 +18,13 @@
 					<th>Date:</th>
 				</tr>
 				<tr>
-					<td>?from</td>
-					<td>?to</td>
-					<td>?date</td>
+					<td>%(from)s</td>
+					<td>%(to)s</td>
+					<td>%(date)s</td>
 				</tr>
 				<tr>
 					<td colspan="3" class="body">
-						?body
+						%(body)s
 					</td>
 				</tr>
 			</table>
