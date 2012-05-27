@@ -1,3 +1,15 @@
 #!/usr/bin/python
 
-import os, email, glob, sqlite3
+import os, argpars, hashlib, email, glob, sqlite3
+
+parser = argparse.ArgumentParser(description='Parses emails into an SQLite database, and optionally renders static HTML files.')
+
+parser.add_argument('-p', '--pattern', dest='pattern', action='store', default='*',
+                   help='glob pattern (including path) that has to be matched for a file to be parsed')
+                   
+parser.add_argument('-r', '--render', dest='render', action='store_true',
+                   help='render static HTML files using the template files in templates/')
+
+args = parser.parse_args()
+options = vars(args)
+
