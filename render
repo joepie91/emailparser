@@ -64,14 +64,38 @@ for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_
 	
 	if available_text == True:
 		# Text version
-		body = "<pre>%s</pre>" % textbody
-		generated = template_message % {'subject': subject, 'date': timestamp, 'from': sender, 'to': recipient, 'body': body, 'title': options['title'], 'version': "Plaintext version", 'index': "../index.html", 'versions': version_list}
+		variables = {
+			'subject': subject, 
+			'date': timestamp, 
+			'from': sender, 
+			'to': recipient, 
+			'body': "<pre>%s</pre>" % textbody, 
+			'title': options['title'], 
+			'version': "Plaintext version", 
+			'index': "../index.html", 
+			'versions': version_list
+		}
+
+		generated = template_message % variables
 		open('%s/messages/%s_text.html' % (options['output_dir'], sha1_hash), 'w').write(generated.encode('UTF-8'))
+		print "Successfully generated plaintext version of %s." % sha1_hash
 	
 	if available_html == True:
 		# HTML version
-		body = htmlbody
-		generated = template_message % {'subject': subject, 'date': timestamp, 'from': sender, 'to': recipient, 'body': body, 'title': options['title'], 'version': "HTML version", 'index': "../index.html", 'versions': version_list}
+		variables = {
+			'subject': subject, 
+			'date': timestamp, 
+			'from': sender, 
+			'to': recipient, 
+			'body': htmlbody, 
+			'title': options['title'], 
+			'version': "HTML version", 
+			'index': "../index.html", 
+			'versions': version_list
+		}
+		
+		generated = template_message % variables
 		open('%s/messages/%s_html.html' % (options['output_dir'], sha1_hash), 'w').write(generated.encode('UTF-8'))
+		print "Successfully generated HTML version of %s." % sha1_hash
 		
 shutil.copy('%s/style.css' % options['template_dir'], '%s/style.css' % options['output_dir'])
