@@ -2,6 +2,23 @@
 
 import os, argparse, hashlib, email, email.header, glob, sqlite3
 
+parser = argparse.ArgumentParser(description='Parses emails into an SQLite database, and optionally renders static HTML files.')
+
+parser.add_argument('-p', dest='pattern', action='store', default='*',
+                   help='glob pattern (including path) that has to be matched for a file to be parsed')
+                   
+parser.add_argument('-d', dest='database', action='store', default='emails.db',
+                   help='path of the database that should be used to store the emails (will be created if it does not exist yet)')
+                   
+parser.add_argument('-a', dest='attachment_dir', action='store', default='attachments',
+                   help='path where attachments should be stored (will be created if it does not exist yet)')
+                   
+parser.add_argument('-r', '--render', dest='render', action='store_true',
+                   help='render static HTML files using the template files in templates/')
+
+args = parser.parse_args()
+options = vars(args)
+
 def getheader(header_text, default="ascii"):
 	headers = email.header.decode_header(header_text)
 	header_sections = [unicode(text, charset or default) for text, charset in headers]
@@ -30,23 +47,6 @@ def get_charset(part):
 		return part.get_charset()
 	else:
 		return "ascii"
-
-parser = argparse.ArgumentParser(description='Parses emails into an SQLite database, and optionally renders static HTML files.')
-
-parser.add_argument('-p', dest='pattern', action='store', default='*',
-                   help='glob pattern (including path) that has to be matched for a file to be parsed')
-                   
-parser.add_argument('-d', dest='database', action='store', default='emails.db',
-                   help='path of the database that should be used to store the emails (will be created if it does not exist yet)')
-                   
-parser.add_argument('-a', dest='attachment_dir', action='store', default='attachments',
-                   help='path where attachments should be stored (will be created if it does not exist yet)')
-                   
-parser.add_argument('-r', '--render', dest='render', action='store_true',
-                   help='render static HTML files using the template files in templates/')
-
-args = parser.parse_args()
-options = vars(args)
 
 database = sqlite3.connect(options['database'])
 cursor = database.cursor()
