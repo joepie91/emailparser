@@ -4,11 +4,14 @@ import os, argparse, hashlib, sqlite3, time
 
 parser = argparse.ArgumentParser(description='Renders static HTML pages and indexes from an SQLite database of emails and an attachment folder.')
 
-parser.add_argument('-o', dest='output_dir', action='store', default='render',
+parser.add_argument('-o', dest='output_dir', action='store', default='rendered_files',
                    help='path of the directory where rendered files should be stored')
                    
 parser.add_argument('-t', dest='template_dir', action='store', default='templates',
                    help='path where the template files are')
+                   
+parser.add_argument('-i', dest='title', action='store', default='Inbox',
+                   help='title for the rendered pages')
                    
 parser.add_argument('-d', dest='database', action='store', default='emails.db',
                    help='path of the database that should be used to render the e-mail files')
@@ -30,8 +33,37 @@ cursor = database.cursor()
 # Load templates
 template_message = open('%s/message.html' % options['template_dir']).read()
 
+# Create output directory if necessary
+try:
+	os.makedirs(options['output_dir'])
+except OSError:
+	pass
+
 for message in cursor.execute("SELECT * FROM emails"):
 	message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_hash = message
-	generated = template_message % {'subject': subject, 'date': timestamp, 'from': sender, 'to': recipient, 'body': textbody, 'title': "admin@cryto.net", 'version': "Plaintext version"}
-	print generated
+	
+	versions = {}
+	
+	if textbody != "":
+		available_text = True
+		versions['Plaintext'] = '%s_text.html' % sha1_hash
+		
+	if htmlbody != "":
+		available_html = True
+		versions['HTML'] = '%s_html.html' % sha1_hash
+	
+	version_list = "".join(['<a href="%s" class="version">%s</a>' % (value, key) for key, value in versions.viewitems()])
+	
+	if available_text:
+		# Text version
+		body = "<pre>%s</pre>" % textbody
+		generated = template_message % {'subject': subject, 'date': timestamp, 'from': sender, 'to': recipient, 'body': body, 'title': options['title'], 'version': "Plaintext version", 'index': "../index.html", 'versions': version_list}
+		open('%s/%s_text.html' % (options['output_dir'], sha1_hash), 'w').write(generated.encode('UTF-8'))
+	
+	if available_html:
+		# HTML version
+		body = htmlbody
+		generated = template_message % {'subject': subject, 'date': timestamp, 'from': sender, 'to': recipient, 'body': body, 'title': options['title'], 'version': "HTML version", 'index': "../index.html", 'versions': version_list}
+		open('%s/%s_html.html' % (options['output_dir'], sha1_hash), 'w').write(generated.encode('UTF-8'))
+	
 	exit(1)
