@@ -39,6 +39,9 @@ parser.add_argument('-p', dest='pattern', action='store', default='*',
 parser.add_argument('-d', dest='database', action='store', default='emails.db',
                    help='path of the database that should be used to store the emails (will be created if it does not exist yet)')
                    
+parser.add_argument('-a', dest='attachment_dir', action='store', default='attachments',
+                   help='path where attachments should be stored (will be created if it does not exist yet)')
+                   
 parser.add_argument('-r', '--render', dest='render', action='store_true',
                    help='render static HTML files using the template files in templates/')
 
@@ -50,7 +53,7 @@ cursor = database.cursor()
 
 try:
 	# Create directories first
-	os.makedirs("attachments")
+	os.makedirs(options['attachment_dir'])
 except OSError:
 	pass
 
@@ -108,7 +111,7 @@ for email_file in file_list:
 				attachment_type = part.get_content_type()
 				attachment_extension = os.path.splitext(attachment_filename)[1][1:]
 				attachment_size = len(attachment_data)
-				attachment_destination = "attachments/%s.%s" % (attachment_sha1, attachment_extension)
+				attachment_destination = "%s/%s.%s" % (options['attachment_dir'], attachment_sha1, attachment_extension)
 				#print "Attachment found of type %s: %s (%s)" % (attachment_type, attachment_filename, attachment_destination)
 				
 				attachment_file = open(attachment_destination, "w")
