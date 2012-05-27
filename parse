@@ -46,10 +46,21 @@ database = sqlite3.connect('emails.db')
 cursor = database.cursor()
 
 try:
-	# Try to create the table
+	# Create directories first
+	os.makedirs("attachments")
+except OSError:
+	pass
+
+try:
+	# Try to create emails table
 	cursor.execute("CREATE TABLE emails (`message_id`, `from`, `to`, `subject`, `date`, `body`, `html`, `hash`)")
 except sqlite3.OperationalError:
-	# Table already exists
+	pass
+	
+try:
+	# Try to create attachments table
+	cursor.execute("CREATE TABLE attachments (`message_hash`, `filename`, `type`, `hash`, `size`)")
+except sqlite3.OperationalError:
 	pass
 
 file_list = glob.glob(options['pattern'])
@@ -73,6 +84,8 @@ for email_file in file_list:
 		message_parts = [find_submessages(message)]
 		message_parts = flatten(message_parts)
 		
+		attachment_list = []
+		
 		for part in message_parts:
 			if part.get_filename() is None:
 				# Part of the message
@@ -86,13 +99,32 @@ for email_file in file_list:
 					print "WARNING: Unknown message format encountered in %s, message may be incomplete." % sha1_hash
 			else:
 				# Attachment
-				print "Attachment found of type %s: %s" % (part.get_content_type(), part.get_filename())
+				attachment_data = part.get_payload(decode=True)
+				attachment_sha1 = hashlib.sha1(attachment_data).hexdigest()
+				attachment_filename = part.get_filename()
+				attachment_type = part.get_content_type()
+				attachment_extension = os.path.splitext(attachment_filename)[1][1:]
+				attachment_size = len(attachment_data)
+				attachment_destination = "attachments/%s.%s" % (attachment_sha1, attachment_extension)
+				#print "Attachment found of type %s: %s (%s)" % (attachment_type, attachment_filename, attachment_destination)
+				
+				attachment_file = open(attachment_destination, "w")
+				attachment_file.write(attachment_data)
+				attachment_file.close()
+				
+				attachment_list.append((attachment_filename, attachment_type, attachment_sha1, attachment_size))
 		
 		timestamp = 0
 		
 		new_row = (getheader(message['message-id']), getheader(message['from']), getheader(message['to']), getheader(subject), timestamp, textbody, htmlbody, sha1_hash)
 		cursor.execute("INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_row)
 		print "Successfully parsed and inserted e-mail with SHA1 hash %s." % sha1_hash
+		
+		if len(attachment_list) > 0:
+			for attachment in attachment_list:
+				new_row = (sha1_hash, attachment[0], attachment[1], attachment[2], attachment[3])
+				cursor.execute("INSERT INTO attachments VALUES (?, ?, ?, ?, ?)", new_row)
+			print "Successfully inserted %d attachment(s) for %s." % (len(attachment_list), sha1_hash)
 
 database.commit()
 print "Changes successfully committed to database, exiting..."
