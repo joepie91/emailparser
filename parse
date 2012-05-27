@@ -6,6 +6,30 @@ def getheader(header_text, default="ascii"):
 	headers = email.header.decode_header(header_text)
 	header_sections = [unicode(text, charset or default) for text, charset in headers]
 	return u"".join(header_sections)
+	
+def find_submessages(message):
+	if message.is_multipart():
+		return [find_submessages(part) for part in message.get_payload()]
+	else:
+		return message
+
+def flatten(x):
+	# http://kogs-www.informatik.uni-hamburg.de/~meine/python_tricks
+	result = []
+	for el in x:
+		if hasattr(el, "__iter__") and not isinstance(el, basestring):
+			result.extend(flatten(el))
+		else:
+			result.append(el)
+	return result
+
+def get_charset(part):
+	if part.get_content_charset():
+		return part.get_content_charset()
+	elif part.get_charset():
+		return part.get_charset()
+	else:
+		return "ascii"
 
 print sqlite3.version
 parser = argparse.ArgumentParser(description='Parses emails into an SQLite database, and optionally renders static HTML files.')
@@ -42,11 +66,32 @@ for email_file in file_list:
 		else:
 			subject = message['subject']
 		
-		sha1_hash = hashlib.sha1("%s/%s/%s/%s" % (message['from'], message['to'], message['message-id'], subject)).hexdigest()
-		
-		timestamp = 0
 		textbody = ""
 		htmlbody = ""
+		
+		sha1_hash = hashlib.sha1("%s/%s/%s/%s" % (message['from'], message['to'], message['message-id'], subject)).hexdigest()
+		
+		message_parts = [find_submessages(message)]
+		message_parts = flatten(message_parts)
+		print message_parts
+		
+		for part in message_parts:
+			if part.get_filename() is None:
+				# Part of the message
+				if part.get_content_type() == "text/plain":
+					if textbody == "":
+						textbody = part.get_payload(decode=True).decode(get_charset(part))
+				elif part.get_content_type() == "text/html" or part.get_content_type == "text/xhtml+xml" or part.get_content_type == "application/xhtml+xml":
+					if htmlbody == "":
+						htmlbody = part.get_payload(decode=True).decode(get_charset(part))
+				else:
+					print "WARNING: Unknown message format encountered in %s, message may be incomplete." % sha1_hash
+			else:
+				# Attachment
+				print "Attachment found of type %s: %s" % (part.get_content_type(), part.get_filename())
+
+		
+		timestamp = 0
 		
 		new_row = (getheader(message['message-id']), getheader(message['from']), getheader(message['to']), getheader(subject), timestamp, textbody, htmlbody, sha1_hash)
 		cursor.execute("INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_row)
