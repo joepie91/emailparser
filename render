@@ -51,7 +51,7 @@ for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_
 		available_html = True
 		versions['HTML'] = '%s_html.html' % sha1_hash
 	
-	version_list = "".join(['<a href="%s" class="version">%s</a>' % (value, key) for key, value in versions.viewitems()])
+	version_list = "".join('<a href="%s" class="version">%s</a>' % (value, key) for key, value in versions.viewitems())
 	
 	if available_text:
 		# Text version
