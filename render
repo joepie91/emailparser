@@ -39,8 +39,7 @@ try:
 except OSError:
 	pass
 
-for message in cursor.execute("SELECT * FROM emails"):
-	message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_hash = message
+for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_hash in cursor.execute("SELECT * FROM emails"):
 	
 	versions = {}
 	
