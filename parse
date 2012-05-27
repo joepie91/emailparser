@@ -13,3 +13,5 @@ parser.add_argument('-r', '--render', dest='render', action='store_true',
 args = parser.parse_args()
 options = vars(args)
 
+filelist = glob.glob(options['pattern'])
+print filelist
