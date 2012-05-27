@@ -21,7 +21,13 @@ options = vars(args)
 
 def getheader(header_text, default="ascii"):
 	headers = email.header.decode_header(header_text)
-	header_sections = [unicode(text, charset or default) for text, charset in headers]
+	try:
+		header_sections = [unicode(text, charset or default) for text, charset in headers]
+	except UnicodeDecodeError:
+		header_sections = [unicode(text, 'windows-1252') for text, charset in headers]
+	except LookupError:
+		return u""
+	
 	return u"".join(header_sections)
 	
 def find_submessages(message):
@@ -41,12 +47,17 @@ def flatten(x):
 	return result
 
 def get_charset(part):
+	charset = None
+	
 	if part.get_content_charset():
-		return part.get_content_charset()
+		charset = part.get_content_charset()
 	elif part.get_charset():
-		return part.get_charset()
-	else:
+		charset = part.get_charset()
+	
+	if charset is None or charset == "default" or charset.startswith("us-ascii"):
 		return "ascii"
+	else:
+		return charset
 
 # Connect to database
 database = sqlite3.connect(options['database'])
@@ -74,7 +85,7 @@ except sqlite3.OperationalError:
 file_list = glob.glob(options['pattern'])
 
 for email_file in file_list:
-	message = email.message_from_file(open(email_file))
+	message = email.message_from_file(open(email_file, 'r'))
 	
 	if message['message-id'] is None:
 		print "%s is not a valid e-mail file." % email_file
@@ -98,10 +109,20 @@ for email_file in file_list:
 				# Part of the message
 				if part.get_content_type() == "text/plain":
 					if textbody == "":
-						textbody = part.get_payload(decode=True).decode(get_charset(part))
+						try:
+							textbody = part.get_payload(decode=True).decode(get_charset(part))
+						except UnicodeDecodeError:
+							textbody = part.get_payload(decode=True).decode('windows-1252')
+						except LookupError:
+							pass
 				elif part.get_content_type() == "text/html" or part.get_content_type == "text/xhtml+xml" or part.get_content_type == "application/xhtml+xml":
 					if htmlbody == "":
-						htmlbody = part.get_payload(decode=True).decode(get_charset(part))
+						try:
+							htmlbody = part.get_payload(decode=True).decode(get_charset(part))
+						except UnicodeDecodeError:
+							htmlbody = part.get_payload(decode=True).decode('windows-1252')
+						except LookupError:
+							pass
 				else:
 					# Technically this is supposed to be part of the message body, but we have no idea what format it is in...
 					print "WARNING: Unknown message format encountered in %s, message may be incomplete." % sha1_hash
