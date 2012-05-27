@@ -3,7 +3,7 @@ html, body
 	padding: 0px;
 	margin: 0px;
 	font-family: sans-serif;
-	background-color: #F7F7F7;
+	background-color: #F7F7F7 !important;
 }
 
 h1
