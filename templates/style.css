@@ -58,6 +58,11 @@ table.message
 	margin-top: 20px;
 }
 
+table.message-detail > tbody > tr > th
+{
+	width: 33.33333%;
+}
+
 table.message > tbody > tr > th, table.message > tbody > tr > td
 {
 	text-align: left;
