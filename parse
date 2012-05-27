@@ -17,7 +17,7 @@ database = sqlite3.connect('emails.db').cursor()
 
 try:
 	# Try to create the table
-	database.execute("CREATE TABLE emails (`message_id`, `from`, `to`, `subject`, `date`, `body`, `html`)")
+	database.execute("CREATE TABLE emails (`message_id`, `from`, `to`, `subject`, `date`, `body`, `html`, `hash`)")
 except sqlite3.OperationalError:
 	# Table already exists
 	pass
