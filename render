@@ -35,7 +35,7 @@ template_message = open('%s/message.html' % options['template_dir']).read()
 
 # Create output directory if necessary
 try:
-	os.makedirs(options['output_dir'])
+	os.makedirs("%s/messages" % options['output_dir'])
 except OSError:
 	pass
 
