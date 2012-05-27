@@ -31,7 +31,6 @@ def get_charset(part):
 	else:
 		return "ascii"
 
-print sqlite3.version
 parser = argparse.ArgumentParser(description='Parses emails into an SQLite database, and optionally renders static HTML files.')
 
 parser.add_argument('-p', '--pattern', dest='pattern', action='store', default='*',
