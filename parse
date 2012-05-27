@@ -48,11 +48,12 @@ def get_charset(part):
 	else:
 		return "ascii"
 
+# Connect to database
 database = sqlite3.connect(options['database'])
 cursor = database.cursor()
 
 try:
-	# Create directories first
+	# Create attachment directory first
 	os.makedirs(options['attachment_dir'])
 except OSError:
 	pass
@@ -69,6 +70,7 @@ try:
 except sqlite3.OperationalError:
 	pass
 
+# Select all files matching the given pattern
 file_list = glob.glob(options['pattern'])
 
 for email_file in file_list:
@@ -101,6 +103,7 @@ for email_file in file_list:
 					if htmlbody == "":
 						htmlbody = part.get_payload(decode=True).decode(get_charset(part))
 				else:
+					# Technically this is supposed to be part of the message body, but we have no idea what format it is in...
 					print "WARNING: Unknown message format encountered in %s, message may be incomplete." % sha1_hash
 			else:
 				# Attachment
@@ -121,6 +124,7 @@ for email_file in file_list:
 		
 		new_row = (getheader(message['message-id']), getheader(message['from']), getheader(message['to']), getheader(subject), timestamp, textbody, htmlbody, sha1_hash)
 		cursor.execute("INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_row)
+		
 		print "Successfully parsed and inserted e-mail with SHA1 hash %s." % sha1_hash
 		
 		if len(attachment_list) > 0:
