@@ -2,7 +2,7 @@
 
 import os, argparse, hashlib, email, email.header, email.utils, glob, sqlite3, time
 
-parser = argparse.ArgumentParser(description='Parses emails into an SQLite database, and optionally renders static HTML files.')
+parser = argparse.ArgumentParser(description='Parses emails into an SQLite database and an attachment folder.')
 
 parser.add_argument('-p', dest='pattern', action='store', default='*',
                    help='glob pattern (including path) that has to be matched for a file to be parsed')
@@ -12,9 +12,6 @@ parser.add_argument('-d', dest='database', action='store', default='emails.db',
                    
 parser.add_argument('-a', dest='attachment_dir', action='store', default='attachments',
                    help='path where attachments should be stored (will be created if it does not exist yet)')
-                   
-parser.add_argument('-r', '--render', dest='render', action='store_true',
-                   help='render static HTML files using template files')
                    
 parser.add_argument('-f', '--forced', dest='forced', action='store_true',
                    help='force insertion into database, even if entries already exist')
