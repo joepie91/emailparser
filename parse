@@ -1,6 +1,12 @@
 #!/usr/bin/python
 
-import os, argparse, hashlib, email, glob, sqlite3
+import os, argparse, hashlib, email, email.header, glob, sqlite3
+
+def getheader(header_text, default="ascii"):
+	headers = email.header.decode_header(header_text)
+	header_sections = [unicode(text, charset or default) for text, charset in headers]
+	return u"".join(header_sections)
+
 print sqlite3.version
 parser = argparse.ArgumentParser(description='Parses emails into an SQLite database, and optionally renders static HTML files.')
 
@@ -42,7 +48,7 @@ for email_file in file_list:
 		textbody = ""
 		htmlbody = ""
 		
-		new_row = (message['message-id'], message['from'], message['to'], subject, timestamp, textbody, htmlbody, sha1_hash)
+		new_row = (getheader(message['message-id']), getheader(message['from']), getheader(message['to']), getheader(subject), timestamp, textbody, htmlbody, sha1_hash)
 		cursor.execute("INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_row)
 		print "Successfully parsed and inserted e-mail with SHA1 hash %s." % sha1_hash
 
