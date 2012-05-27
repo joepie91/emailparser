@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os, argparse, hashlib, sqlite3, time, shutil, cgi
+from datetime import datetime
 
 parser = argparse.ArgumentParser(description='Renders static HTML pages and indexes from an SQLite database of emails and an attachment folder.')
 
@@ -45,6 +46,7 @@ for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_
 	recipient = cgi.escape(recipient, True)
 	subject = cgi.escape(subject, True)
 	message_id = cgi.escape(message_id, True)
+	timestamp = datetime.fromtimestamp(timestamp).strftime("%A %B %e, %Y %H:%M:%S")
 	
 	versions = {}
 	
