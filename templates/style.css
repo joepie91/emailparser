@@ -1,0 +1,65 @@
+html, body
+{
+	padding: 0px;
+	margin: 0px;
+	font-family: sans-serif;
+	background-color: #F7F7F7;
+}
+
+h1
+{
+	margin: 0px;
+	padding: 9px 12px;
+	background-color: #181818;
+	color: white;
+}
+
+a.back
+{
+	padding: 7px 12px;
+	color: white;
+	display: block;
+	background-color: #393939;
+}
+
+a.back:hover
+{
+	background-color: #444444;
+}
+
+.main
+{
+	padding: 9px 13px;
+}
+
+h2, h3
+{
+	margin: 3px 0px;
+}
+
+table.message
+{
+	width: 100%;
+	border: 2px solid #313131;
+	border-collapse: collapse;
+	margin-top: 20px;
+}
+
+table th, table td
+{
+	text-align: left;
+	border: 1px solid #313131;
+	padding: 5px 7px;
+}
+
+table th
+{
+	background-color: #313131;
+	color: white;
+}
+
+table td.body
+{
+	border: 2px solid #313131;
+	padding: 16px 13px;
+}	
