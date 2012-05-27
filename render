@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, argparse, hashlib, sqlite3, time, shutil
+import os, argparse, hashlib, sqlite3, time, shutil, cgi
 
 parser = argparse.ArgumentParser(description='Renders static HTML pages and indexes from an SQLite database of emails and an attachment folder.')
 
@@ -22,9 +22,6 @@ parser.add_argument('-a', dest='attachment_dir', action='store', default='attach
 args = parser.parse_args()
 options = vars(args)
 
-def escape_html_chars(text):
-	return text.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
-
 if os.path.isfile(options['database']) == False:
 	print "Database file not found. Use the -d switch to specify a custom database path."
 	exit(1)
@@ -44,10 +41,10 @@ except OSError:
 
 for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_hash in cursor.execute("SELECT * FROM emails"):
 	
-	sender = escape_html_chars(sender)
-	recipient = escape_html_chars(recipient)
-	subject = escape_html_chars(subject)
-	message_id = escape_html_chars(message_id)
+	sender = cgi.escape(sender, True)
+	recipient = cgi.escape(recipient, True)
+	subject = cgi.escape(subject, True)
+	message_id = cgi.escape(message_id, True)
 	
 	versions = {}
 	
