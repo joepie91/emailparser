@@ -23,6 +23,13 @@ parser.add_argument('-a', dest='attachment_dir', action='store', default='attach
 args = parser.parse_args()
 options = vars(args)
 
+def format_size(num):
+	for unit in [' bytes','KB','MB','GB']:
+		if num < 1024.0:
+			return "%3.1f%s" % (num, unit)
+		num /= 1024.0
+	return "%3.1f%s" % (num, 'TB')
+
 if os.path.isfile(options['database']) == False:
 	print "Database file not found. Use the -d switch to specify a custom database path."
 	exit(1)
@@ -47,6 +54,19 @@ for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_
 	subject = cgi.escape(subject, True)
 	message_id = cgi.escape(message_id, True)
 	timestamp = datetime.fromtimestamp(timestamp).strftime("%A %B %e, %Y %H:%M:%S")
+	
+	attachment_list = []
+	attachment_cursor = database.cursor()
+	for attachment_hash, attachment_filename, attachment_type, message_hash, attachment_size in attachment_cursor.execute("SELECT * FROM attachments WHERE `message_hash` = ?", (sha1_hash,)):
+		attachment_extension = os.path.splitext(attachment_filename)[1][1:]
+		attachment_file = "%s.%s" % (attachment_hash, attachment_extension)
+		attachment_list.append('<a href="../attachments/%s" class="attachment">%s (%s, %s)</a>' % (attachment_file, attachment_filename, attachment_type, format_size(attachment_size)))
+	
+	if len(attachment_list) > 0:
+		attachments = "".join(attachment_list)
+		print "ATTACHMENTS %s" % sha1_hash
+	else:
+		attachments = '<div class="attachment light">No attachments.</div>'
 	
 	versions = {}
 	
@@ -75,7 +95,8 @@ for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_
 			'title': options['title'], 
 			'version': "Plaintext version", 
 			'index': "../index.html", 
-			'versions': version_list
+			'versions': version_list,
+			'attachments': attachments
 		}
 
 		generated = template_message % variables
@@ -93,7 +114,8 @@ for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_
 			'title': options['title'], 
 			'version': "HTML version", 
 			'index': "../index.html", 
-			'versions': version_list
+			'versions': version_list,
+			'attachments': attachments
 		}
 		
 		generated = template_message % variables
