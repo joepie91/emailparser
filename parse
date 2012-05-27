@@ -72,7 +72,6 @@ for email_file in file_list:
 		
 		message_parts = [find_submessages(message)]
 		message_parts = flatten(message_parts)
-		print message_parts
 		
 		for part in message_parts:
 			if part.get_filename() is None:
@@ -88,7 +87,6 @@ for email_file in file_list:
 			else:
 				# Attachment
 				print "Attachment found of type %s: %s" % (part.get_content_type(), part.get_filename())
-
 		
 		timestamp = 0
 		
