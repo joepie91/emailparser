@@ -13,5 +13,18 @@ parser.add_argument('-r', '--render', dest='render', action='store_true',
 args = parser.parse_args()
 options = vars(args)
 
-filelist = glob.glob(options['pattern'])
-print filelist
+file_list = glob.glob(options['pattern'])
+
+for email_file in file_list:
+	message = email.message_from_file(open(email_file))
+	
+	if message['message-id'] is None:
+		print "%s is not a valid e-mail file." % email_file
+	else:
+		if 'subject' not in message or message['subject'] is None:
+			subject = ""
+		else:
+			subject = message['subject']
+		
+		sha1_hash = hashlib.sha1("%s/%s/%s/%s" % (message['from'], message['to'], message['message-id'], subject)).hexdigest()
+			
