@@ -175,7 +175,12 @@ for email_file in file_list:
 			timestamp = 0
 			print "WARNING: Failed to determine unix timestamp for %s." % sha1_hash
 	
-		new_row = (getheader(message['message-id']), getheader(message['from']), getheader(message['to']), getheader(subject), timestamp, textbody, htmlbody, sha1_hash)
+		try:
+			new_row = (getheader(message['message-id']), getheader(message['from']), getheader(message['to']), getheader(subject), timestamp, textbody, htmlbody, sha1_hash)
+		except UnicodeDecodeError:
+			print "ERROR: Failed parsing %s, headers could not be decoded." % sha1_hash
+			continue
+		
 		cursor.execute("INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_row)
 		print "Successfully parsed and inserted e-mail with SHA1 hash %s." % sha1_hash
 		
