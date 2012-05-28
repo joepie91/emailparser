@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+	<head>
+		<title>%(page)s - %(pagenum)s - %(title)s</title>
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<h1>%(title)s</h1>
+		<a href="%(index)s" class="back">&lt;&lt; back to index</a>
+		<div class="main">
+			<h2>%(page)s</h2>
+			<h3>%(pagenum)s</h3>
+			
+			<table class="message message-list">
+				<tbody>
+					<tr>
+						<th>SHA1 hash</th>
+						<th>From</th>
+						<th>To</th>
+						<th>Subject</th>
+						<th>Date</th>
+						<th>Attachments</th>
+					</tr>
+					%(items)s
+				</tbody>
+			</table>
+		</div>
+	</body>
+</html>
