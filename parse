@@ -114,7 +114,12 @@ for email_file in file_list:
 						try:
 							textbody = part.get_payload(decode=True).decode(get_charset(part))
 						except UnicodeDecodeError:
-							textbody = part.get_payload(decode=True).decode('windows-1252')
+							# This part is probably in windows-1252 encoding
+							try:
+								textbody = part.get_payload(decode=True).decode('windows-1252')
+							except UnicodeDecodeError:
+								# Ok, we really have no clue how to decode this, we'll just skip it...
+								continue
 						except LookupError:
 							pass
 				elif part.get_content_type() == "text/html" or part.get_content_type == "text/xhtml+xml" or part.get_content_type == "application/xhtml+xml":
@@ -122,7 +127,12 @@ for email_file in file_list:
 						try:
 							htmlbody = part.get_payload(decode=True).decode(get_charset(part))
 						except UnicodeDecodeError:
-							htmlbody = part.get_payload(decode=True).decode('windows-1252')
+							# This part is probably in windows-1252 encoding
+							try:
+								htmlbody = part.get_payload(decode=True).decode('windows-1252')
+							except UnicodeDecodeError:
+								# Ok, we really have no clue how to decode this, we'll just skip it...
+								continue
 						except LookupError:
 							pass
 				else:
