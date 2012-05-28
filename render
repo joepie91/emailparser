@@ -22,9 +22,17 @@ parser.add_argument('-a', dest='attachment_dir', action='store', default='attach
                    
 parser.add_argument('-n', dest='per_page', action='store', default='20',
                    help='amount of entries per page')
+                   
+parser.add_argument('-r', dest='original_path', action='store', default=None,
+                   help='path where original .eml files can be found')
 
 args = parser.parse_args()
 options = vars(args)
+
+if options['original_path'] is not None:
+	originals_available = True
+else:
+	originals_available = False
 
 def format_size(num):
 	for unit in [' bytes','KB','MB','GB']:
@@ -127,6 +135,9 @@ for message_id, sender, recipient, subject, unixtime, textbody, htmlbody, sha1_h
 	else:
 		available_html = False
 	
+	if originals_available:
+		versions['Original'] = '../original/%s.eml' % sha1_hash
+	
 	version_list = "".join('<a href="%s" class="version">%s</a>' % (value, key) for key, value in versions.viewitems())
 	
 	if available_text == True:
@@ -214,3 +225,11 @@ sorted_list = sorted(email_list, key=lambda email: email[5].lower())
 sorted_list.reverse()
 
 shutil.copy('%s/style.css' % options['template_dir'], '%s/style.css' % options['output_dir'])
+
+if originals_available == True:
+	# Copy all original email messages into a subfolder of the output directory
+	try:
+		shutil.copytree(options['original_path'], '%s/original' % options['output_dir'])
+		print "Original e-mail files copied."
+	except OSError:
+		print "ERROR: Could not copy original e-mail files. Ensure the original/ directory does NOT exist in your output directory yet."
