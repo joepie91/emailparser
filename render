@@ -92,13 +92,13 @@ except OSError:
 
 email_list = []
 
-for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_hash in cursor.execute("SELECT * FROM emails"):
+for message_id, sender, recipient, subject, unixtime, textbody, htmlbody, sha1_hash in cursor.execute("SELECT * FROM emails"):
 	
 	sender = cgi.escape(sender, True)
 	recipient = cgi.escape(recipient, True)
 	subject = cgi.escape(subject, True)
 	message_id = cgi.escape(message_id, True)
-	timestamp = datetime.fromtimestamp(timestamp).strftime("%A %B %e, %Y %H:%M:%S")
+	timestamp = datetime.fromtimestamp(unixtime).strftime("%A %B %e, %Y %H:%M:%S")
 	
 	attachment_list = []
 	attachment_cursor = database.cursor()
@@ -172,10 +172,10 @@ for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_
 	except AttributeError:
 		snippet = ""
 	
-	email_list.append((sha1_hash, available_text, available_html, sender, recipient, subject, timestamp, len(attachment_list), snippet))
+	email_list.append((sha1_hash, available_text, available_html, sender, recipient, subject, timestamp, len(attachment_list), snippet, unixtime))
 
 # Sort by timestamp, ascending
-sorted_list = sorted(email_list, key=lambda email: email[6].lower())
+sorted_list = sorted(email_list, key=lambda email: email[9])
 render_index(sorted_list, "Sorted from old to new", "date_asc")
 
 # Sort by timestamp, descending
