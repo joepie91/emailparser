@@ -10,6 +10,13 @@
 				$('.clickable').click(function(){
 					window.location = $(this).data('url');
 				});
+				
+				$('.jumplist').change(function(){
+					console.log($(this).children('option:selected'));
+					$(this).children('option:selected').each(function(){
+						window.location = $(this).val();
+					});
+				});
 			});
 		</script>
 	</head>
@@ -21,7 +28,11 @@
 			<h3>%(pagenum)s</h3>
 			
 			<div class="navigation">
-				
+				%(prev)s
+				<select class="jumplist">
+					%(pages)s
+				</select>
+				%(next)s
 			</div>
 			
 			<table class="message message-list">

@@ -57,18 +57,37 @@ def chunk(iterable, chunksize, fillvalue=None):
 	
 	return result
 
+def is_selected(i, page):
+	if i == page:
+		return "selected"
+	else:
+		return ""
+
 def render_index(email_list, title, identifier):
 	email_list = chunk(email_list, int(options['per_page']))
 	
 	current_page = 0
 	
 	for list_chunk in email_list:
+		if current_page == 0:
+			prevpage = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+		else:
+			prevpage = '<a href="index_%s_%d.html">&lt;&lt; previous page</a>' % (identifier, current_page - 1)
+		
+		if current_page == len(email_list) - 1:
+			nextpage = ""
+		else:
+			nextpage = '<a href="index_%s_%d.html">next page &gt;&gt;</a>' % (identifier, current_page + 1)
+		
 		variables = {
 			'page': title, 
 			'pagenum': "Page %d of %d" % (current_page + 1, len(email_list)),
 			'title': options['title'],
 			'index': "../index.html",
-			'items': "".join('<tr class="clickable" data-url="messages/%s"><td>%s...</td><td>%s</td><td>%s</td><td><a href="messages/%s">%s</a></td><td>%s</td><td>%s</td></tr>' % (message[10], message[0][:8], message[3], message[4], message[10], message[5], message[6], message[7]) for message in list_chunk)
+			'items': "".join('<tr class="clickable" data-url="messages/%s"><td>%s...</td><td>%s</td><td>%s</td><td><a href="messages/%s">%s</a></td><td>%s</td><td>%s</td></tr>' % (message[10], message[0][:8], message[3], message[4], message[10], message[5], message[6], message[7]) for message in list_chunk),
+			'prev': prevpage,
+			'next': nextpage,
+			'pages': "".join('<option value="index_%s_%d.html" %s>Page %d</option>' % (identifier, i, is_selected(i, current_page), i + 1) for i in xrange(0, len(email_list)))
 		}
 		
 		filename = "%s/index_%s_%d.html" % (options['output_dir'], identifier, current_page)
