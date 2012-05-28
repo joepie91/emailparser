@@ -83,7 +83,7 @@ table.message > tbody > tr > th
 
 table.message-list th.hash
 {
-	width: 320px;
+	width: 100px;
 }
 
 table.message-list th.from
