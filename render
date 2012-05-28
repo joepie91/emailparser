@@ -19,6 +19,9 @@ parser.add_argument('-d', dest='database', action='store', default='emails.db',
                    
 parser.add_argument('-a', dest='attachment_dir', action='store', default='attachments',
                    help='path where attachments are stored')
+                   
+parser.add_argument('-n', dest='per_page', action='store', default='20',
+                   help='amount of entries per page')
 
 args = parser.parse_args()
 options = vars(args)
@@ -48,7 +51,7 @@ def chunk(iterable, chunksize, fillvalue=None):
 	return result
 
 def render_index(email_list, title, identifier):
-	email_list = chunk(email_list, 4)
+	email_list = chunk(email_list, int(options['per_page']))
 	
 	current_page = 0
 	
