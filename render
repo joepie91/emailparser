@@ -48,13 +48,11 @@ def chunk(iterable, chunksize, fillvalue=None):
 	return result
 
 def render_index(email_list, title, identifier):
-	new_list = []
+	email_list = chunk(email_list, 4)
 	
-	for message in email_list:
-		new_list.append((message[0], message[0]))
-		
-	new_list = chunk(new_list, 4)
-	
+	for list_chunk in email_list:
+		for message in list_chunk:
+			print message[0]
 
 if os.path.isfile(options['database']) == False:
 	print "Database file not found. Use the -d switch to specify a custom database path."
