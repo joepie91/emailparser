@@ -90,10 +90,12 @@ for email_file in file_list:
 	# To save time when updating a database, let's first check whether the filename is already present in the database as a hash.
 	# There is no need to check for the format here, since if the filename is not a valid hash, it simply won't match anything.
 	sha1_hash = os.path.splitext(os.path.split(email_file)[1])[0]
-	cursor.execute("SELECT * FROM emails WHERE `Hash` = ?", (sha1_hash,))
-	if len(cursor.fetchall()) > 0 and options['forced'] == False:
-		print "Skipping %s, already exists in the database according to filename." % sha1_hash
-		continue
+	
+	if options['forced'] == False:
+		cursor.execute("SELECT * FROM emails WHERE `Hash` = ?", (sha1_hash,))
+		if len(cursor.fetchall()) > 0:
+			print "Skipping %s, already exists in the database according to filename." % sha1_hash
+			continue
 	
 	message = email.message_from_file(open(email_file, 'r'))
 	
@@ -111,81 +113,85 @@ for email_file in file_list:
 		
 		sha1_hash = hashlib.sha1("%s/%s/%s/%s" % (message['from'], message['to'], message['message-id'], subject)).hexdigest()
 		
-		cursor.execute("SELECT * FROM emails WHERE `Hash` = ?", (sha1_hash,))
-		if len(cursor.fetchall()) == 0 or options['forced'] == True:
-			message_parts = [find_submessages(message)]
-			message_parts = flatten(message_parts)
+		if options['forced'] == False:
+			cursor.execute("SELECT * FROM emails WHERE `Hash` = ?", (sha1_hash,))
+			if len(cursor.fetchall()) > 0:
+				print "Skipping %s, already exists in the database according to message hash." % sha1_hash
+				continue
 			
-			for part in message_parts:
-				if part.get_filename() is None:
-					# Part of the message
-					if part.get_content_type() == "text/plain":
-						if textbody == "":
-							try:
-								textbody = part.get_payload(decode=True).decode(get_charset(part))
-							except UnicodeDecodeError:
-								# This part is probably in windows-1252 encoding
-								try:
-									textbody = part.get_payload(decode=True).decode('windows-1252')
-								except UnicodeDecodeError:
-									# Ok, we really have no clue how to decode this, we'll just skip it...
-									continue
-							except LookupError:
-								pass
-					elif part.get_content_type() == "text/html" or part.get_content_type == "text/xhtml+xml" or part.get_content_type == "application/xhtml+xml":
-						if htmlbody == "":
-							try:
-								htmlbody = part.get_payload(decode=True).decode(get_charset(part))
-							except UnicodeDecodeError:
-								# This part is probably in windows-1252 encoding
-								try:
-									htmlbody = part.get_payload(decode=True).decode('windows-1252')
-								except UnicodeDecodeError:
-									# Ok, we really have no clue how to decode this, we'll just skip it...
-									continue
-							except LookupError:
-								pass
-					else:
-						# Technically this is supposed to be part of the message body, but we have no idea what format it is in...
-						print "WARNING: Unknown message format encountered in %s, message may be incomplete." % sha1_hash
-				else:
-					# Attachment
-					attachment_data = part.get_payload(decode=True)
-					attachment_sha1 = hashlib.sha1(attachment_data).hexdigest()
-					attachment_filename = part.get_filename()
-					attachment_type = part.get_content_type()
-					attachment_extension = os.path.splitext(attachment_filename)[1]
-					attachment_size = len(attachment_data)
-					attachment_destination = "%s/%s%s" % (options['attachment_dir'], attachment_sha1, attachment_extension)
-					attachment_list.append((attachment_filename, attachment_type, attachment_sha1, attachment_size))
-					
-					attachment_file = open(attachment_destination, "w")
-					attachment_file.write(attachment_data)
-					attachment_file.close()
-			
-			try:
-				timestamp = int(time.mktime(email.utils.parsedate(message['date'])))
-			except TypeError:
-				timestamp = 0
-				print "WARNING: Failed to determine unix timestamp for %s." % sha1_hash
+		message_parts = [find_submessages(message)]
+		message_parts = flatten(message_parts)
 		
-			new_row = (getheader(message['message-id']), getheader(message['from']), getheader(message['to']), getheader(subject), timestamp, textbody, htmlbody, sha1_hash)
-			cursor.execute("INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_row)
-			print "Successfully parsed and inserted e-mail with SHA1 hash %s." % sha1_hash
-		else:
-			print "Skipping %s, already exists in the database." % sha1_hash
+		for part in message_parts:
+			if part.get_filename() is None:
+				# Part of the message
+				if part.get_content_type() == "text/plain":
+					if textbody == "":
+						try:
+							textbody = part.get_payload(decode=True).decode(get_charset(part))
+						except UnicodeDecodeError:
+							# This part is probably in windows-1252 encoding
+							try:
+								textbody = part.get_payload(decode=True).decode('windows-1252')
+							except UnicodeDecodeError:
+								# Ok, we really have no clue how to decode this, we'll just skip it...
+								continue
+						except LookupError:
+							pass
+				elif part.get_content_type() == "text/html" or part.get_content_type == "text/xhtml+xml" or part.get_content_type == "application/xhtml+xml":
+					if htmlbody == "":
+						try:
+							htmlbody = part.get_payload(decode=True).decode(get_charset(part))
+						except UnicodeDecodeError:
+							# This part is probably in windows-1252 encoding
+							try:
+								htmlbody = part.get_payload(decode=True).decode('windows-1252')
+							except UnicodeDecodeError:
+								# Ok, we really have no clue how to decode this, we'll just skip it...
+								continue
+						except LookupError:
+							pass
+				else:
+					# Technically this is supposed to be part of the message body, but we have no idea what format it is in...
+					print "WARNING: Unknown message format encountered in %s, message may be incomplete." % sha1_hash
+			else:
+				# Attachment
+				attachment_data = part.get_payload(decode=True)
+				attachment_sha1 = hashlib.sha1(attachment_data).hexdigest()
+				attachment_filename = part.get_filename()
+				attachment_type = part.get_content_type()
+				attachment_extension = os.path.splitext(attachment_filename)[1]
+				attachment_size = len(attachment_data)
+				attachment_destination = "%s/%s%s" % (options['attachment_dir'], attachment_sha1, attachment_extension)
+				attachment_list.append((attachment_filename, attachment_type, attachment_sha1, attachment_size))
+				
+				attachment_file = open(attachment_destination, "w")
+				attachment_file.write(attachment_data)
+				attachment_file.close()
+		
+		try:
+			timestamp = int(time.mktime(email.utils.parsedate(message['date'])))
+		except TypeError:
+			timestamp = 0
+			print "WARNING: Failed to determine unix timestamp for %s." % sha1_hash
+	
+		new_row = (getheader(message['message-id']), getheader(message['from']), getheader(message['to']), getheader(subject), timestamp, textbody, htmlbody, sha1_hash)
+		cursor.execute("INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_row)
+		print "Successfully parsed and inserted e-mail with SHA1 hash %s." % sha1_hash
 		
 		if len(attachment_list) > 0:
 			inserted = 0
 			
 			for attachment in attachment_list:
-				cursor.execute("SELECT * FROM attachments WHERE `Hash` = ?", (attachment[2],))
-				if len(cursor.fetchall()) == 0 or options['forced'] == True:
-					new_row = (sha1_hash, attachment[0], attachment[1], attachment[2], attachment[3])
-					cursor.execute("INSERT INTO attachments VALUES (?, ?, ?, ?, ?)", new_row)
-					inserted += 1
-				else:
-					print "Skipping attachment %s, already exists in the database." % attachment[2]
+				if options['forced'] == False:
+					cursor.execute("SELECT * FROM attachments WHERE `Hash` = ?", (attachment[2],))
+					if len(cursor.fetchall()) > 0:
+						print "Skipping attachment %s, already exists in the database." % attachment[2]
+						continue
+					
+				new_row = (sha1_hash, attachment[0], attachment[1], attachment[2], attachment[3])
+				cursor.execute("INSERT INTO attachments VALUES (?, ?, ?, ?, ?)", new_row)
+				inserted += 1
 			
 			if inserted > 0:
 				print "Successfully inserted %d attachment(s) for %s." % (inserted, sha1_hash)
