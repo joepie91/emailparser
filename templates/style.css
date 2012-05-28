@@ -15,6 +15,16 @@ pre {
 	word-wrap: break-word;
 }
 
+.clickable
+{
+	cursor: pointer;
+}
+
+.clickable:hover
+{
+	background-color: #E6E6E6;
+}
+
 .clear
 {
 	clear: both;
