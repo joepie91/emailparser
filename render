@@ -110,7 +110,7 @@ for message_id, sender, recipient, subject, unixtime, textbody, htmlbody, sha1_h
 	
 	attachment_list = []
 	attachment_cursor = database.cursor()
-	for attachment_hash, attachment_filename, attachment_type, message_hash, attachment_size in attachment_cursor.execute("SELECT * FROM attachments WHERE `message_hash` = ?", (sha1_hash,)):
+	for message_hash, attachment_filename, attachment_type, attachment_hash, attachment_size in attachment_cursor.execute("SELECT * FROM attachments WHERE `message_hash` = ?", (sha1_hash,)):
 		attachment_extension = os.path.splitext(attachment_filename)[1]
 		attachment_file = "%s%s" % (attachment_hash, attachment_extension)
 		attachment_list.append('<a href="../attachments/%s" class="attachment">%s (%s, %s)</a>' % (attachment_file, attachment_filename, attachment_type, format_size(attachment_size)))
