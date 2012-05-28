@@ -111,8 +111,8 @@ for message_id, sender, recipient, subject, unixtime, textbody, htmlbody, sha1_h
 	attachment_list = []
 	attachment_cursor = database.cursor()
 	for attachment_hash, attachment_filename, attachment_type, message_hash, attachment_size in attachment_cursor.execute("SELECT * FROM attachments WHERE `message_hash` = ?", (sha1_hash,)):
-		attachment_extension = os.path.splitext(attachment_filename)[1][1:]
-		attachment_file = "%s.%s" % (attachment_hash, attachment_extension)
+		attachment_extension = os.path.splitext(attachment_filename)[1]
+		attachment_file = "%s%s" % (attachment_hash, attachment_extension)
 		attachment_list.append('<a href="../attachments/%s" class="attachment">%s (%s, %s)</a>' % (attachment_file, attachment_filename, attachment_type, format_size(attachment_size)))
 	
 	if len(attachment_list) > 0:
@@ -202,27 +202,35 @@ render_index(sorted_list, "Sorted from new to old", "date_desc")
 
 # Sort by sender, ascending
 sorted_list = sorted(email_list, key=lambda email: email[3].lower())
+render_index(sorted_list, "Sorted by sender, ascending", "from_asc")
 
 # Sort by sender, descending
 sorted_list.reverse()
+render_index(sorted_list, "Sorted by sender, descending", "from_desc")
 
 # Sort by recipient, ascending
 sorted_list = sorted(email_list, key=lambda email: email[4].lower())
+render_index(sorted_list, "Sorted by recipient, ascending", "to_asc")
 
 # Sort by recipient, descending
 sorted_list.reverse()
+render_index(sorted_list, "Sorted by recipient, descending", "to_desc")
 
 # Sort by hash, ascending
 sorted_list = sorted(email_list, key=lambda email: email[0].lower())
+render_index(sorted_list, "Sorted by SHA1 hash, ascending", "hash_asc")
 
 # Sort by hash, descending
 sorted_list.reverse()
+render_index(sorted_list, "Sorted by SHA1 hash, descending", "hash_desc")
 
 # Sort by subject, ascending
 sorted_list = sorted(email_list, key=lambda email: email[5].lower())
+render_index(sorted_list, "Sorted by subject, ascending", "subject_asc")
 
 # Sort by subject, descending
 sorted_list.reverse()
+render_index(sorted_list, "Sorted by subject, descending", "subject_desc")
 
 shutil.copy('%s/style.css' % options['template_dir'], '%s/style.css' % options['output_dir'])
 
@@ -233,3 +241,9 @@ if originals_available == True:
 		print "Original e-mail files copied."
 	except OSError:
 		print "ERROR: Could not copy original e-mail files. Ensure the original/ directory does NOT exist in your output directory yet."
+		
+try:
+	shutil.copytree(options['attachment_dir'], '%s/attachments' % options['output_dir'])
+	print "Attachments copied."
+except OSError:
+	print "ERROR: Could not copy attachments. Ensure the attachments/ directory does NOT exist in your output directory yet."
