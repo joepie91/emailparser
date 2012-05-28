@@ -63,6 +63,11 @@ table.message-detail > tbody > tr > th
 	width: 33.33333%;
 }
 
+table.message-list > tbody > tr > td
+{
+	font-size: 14px;
+}
+
 table.message > tbody > tr > th, table.message > tbody > tr > td
 {
 	text-align: left;
