@@ -196,10 +196,13 @@ for email_file in file_list:
 					if len(cursor.fetchall()) > 0:
 						print "Skipping attachment %s, already exists in the database." % attachment[2]
 						continue
-					
-				new_row = (sha1_hash, attachment[0], attachment[1], attachment[2], attachment[3])
-				cursor.execute("INSERT INTO attachments VALUES (?, ?, ?, ?, ?)", new_row)
-				inserted += 1
+				
+				try:
+					new_row = (sha1_hash, attachment[0], attachment[1], attachment[2], attachment[3])
+					cursor.execute("INSERT INTO attachments VALUES (?, ?, ?, ?, ?)", new_row)
+					inserted += 1
+				except sqlite3.ProgrammingError:
+					print "Inserting of attachment %s failed." % attachment[2]
 			
 			if inserted > 0:
 				print "Successfully inserted %d attachment(s) for %s." % (inserted, sha1_hash)
