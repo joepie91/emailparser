@@ -40,6 +40,7 @@ cursor = database.cursor()
 
 # Load templates
 template_message = open('%s/message.html' % options['template_dir']).read()
+template_index = open('%s/index.html' % options['template_dir']).read()
 
 # Create output directory if necessary
 try:
