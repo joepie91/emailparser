@@ -56,6 +56,12 @@ a.back:hover
 	padding: 9px 13px;
 }
 
+.footer
+{
+	margin-top: 9px;
+	font-size: 13px;
+}
+
 h2, h3
 {
 	margin: 3px 0px;
