@@ -38,10 +38,9 @@ def chunk(iterable, chunksize, fillvalue=None):
 	num_chunks = int(math.ceil(len(iterable) / (chunksize * 1.0)))
 	
 	for i in xrange(0, num_chunks):
-		missing = (chunksize * (i + 1)) - len(iterable)
 		start = (chunksize * i)
 		
-		if missing > 0:
+		if (chunksize * (i + 1)) > len(iterable):
 			end = len(iterable)
 		else:
 			end = (chunksize * (i + 1))
