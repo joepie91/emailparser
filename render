@@ -25,6 +25,9 @@ parser.add_argument('-n', dest='per_page', action='store', default='20',
                    
 parser.add_argument('-r', dest='original_path', action='store', default=None,
                    help='path where original .eml files can be found')
+                   
+parser.add_argument('-x', dest='index', action='store', default='date_desc',
+                   help='the sorting state you wish to use as initial page')
 
 args = parser.parse_args()
 options = vars(args)
@@ -254,6 +257,7 @@ render_index(sorted_list, "Sorted by subject, descending", "subject_desc")
 shutil.copy('%s/style.css' % options['template_dir'], '%s/style.css' % options['output_dir'])
 shutil.copy('%s/up.png' % options['template_dir'], '%s/up.png' % options['output_dir'])
 shutil.copy('%s/down.png' % options['template_dir'], '%s/down.png' % options['output_dir'])
+shutil.copy('%s/index_%s_0.html' % (options['output_dir'], options['index']), '%s/index.html' % options['output_dir'])
 
 if originals_available == True:
 	# Copy all original email messages into a subfolder of the output directory
