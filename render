@@ -61,8 +61,11 @@ def render_index(email_list, title, identifier):
 			'items': "".join('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' % (message[0], message[3], message[4], message[5], message[6], message[7]) for message in list_chunk)
 		}
 		
-		print template_index % variables
-		exit(1)
+		filename = "%s/index_%s_%d.html" % (options['output_dir'], identifier, current_page)
+		
+		generated = template_index % variables
+		open(filename, 'w').write(generated.encode('UTF-8'))
+		print "Wrote page %d for %s." % (current_page, identifier)
 			
 		current_page += 1
 		
