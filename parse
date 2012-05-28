@@ -84,6 +84,8 @@ except sqlite3.OperationalError:
 # Select all files matching the given pattern
 file_list = glob.glob(options['pattern'])
 
+finished = 0
+
 for email_file in file_list:
 	message = email.message_from_file(open(email_file, 'r'))
 	
@@ -169,6 +171,12 @@ for email_file in file_list:
 			
 			if inserted > 0:
 				print "Successfully inserted %d attachment(s) for %s." % (inserted, sha1_hash)
+				
+	finished += 1
+	
+	if finished % 100 == 0:
+		database.commit()
+		print "%d e-mails done, commited changes to database." % finished
 
 database.commit()
-print "Changes successfully committed to database."
+print "Changes successfully committed to database, all done."
