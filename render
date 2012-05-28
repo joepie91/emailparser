@@ -60,7 +60,7 @@ def render_index(email_list, title, identifier):
 			'pagenum': "Page %d of %d" % (current_page + 1, len(email_list)),
 			'title': options['title'],
 			'index': "../index.html",
-			'items': "".join('<tr><td>%s...</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' % (message[0][:8], message[3], message[4], message[5], message[6], message[7]) for message in list_chunk)
+			'items': "".join('<tr class="clickable" data-url="messages/%s"><td>%s...</td><td>%s</td><td>%s</td><td><a href="messages/%s">%s</a></td><td>%s</td><td>%s</td></tr>' % (message[10], message[0][:8], message[3], message[4], message[10], message[5], message[6], message[7]) for message in list_chunk)
 		}
 		
 		filename = "%s/index_%s_%d.html" % (options['output_dir'], identifier, current_page)
@@ -172,7 +172,14 @@ for message_id, sender, recipient, subject, unixtime, textbody, htmlbody, sha1_h
 	except AttributeError:
 		snippet = ""
 	
-	email_list.append((sha1_hash, available_text, available_html, sender, recipient, subject, timestamp, len(attachment_list), snippet, unixtime))
+	if available_html == True:
+		page_name = "%s_html.html" % sha1_hash
+	elif available_text == True:
+		page_name = "%s_text.html" % sha1_hash
+	else:
+		continue
+	
+	email_list.append((sha1_hash, available_text, available_html, sender, recipient, subject, timestamp, len(attachment_list), snippet, unixtime, page_name))
 
 # Sort by timestamp, ascending
 sorted_list = sorted(email_list, key=lambda email: email[9])
