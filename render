@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, argparse, hashlib, sqlite3, time, shutil, cgi, re
+import os, argparse, hashlib, sqlite3, time, shutil, cgi, re, math
 from datetime import datetime
 
 parser = argparse.ArgumentParser(description='Renders static HTML pages and indexes from an SQLite database of emails and an attachment folder.')
@@ -29,6 +29,32 @@ def format_size(num):
 			return "%3.1f%s" % (num, unit)
 		num /= 1024.0
 	return "%3.1f%s" % (num, 'TB')
+	
+def chunk(iterable, chunksize, fillvalue=None):
+	result = []
+	num_chunks = int(math.ceil(len(iterable) / (chunksize * 1.0)))
+	
+	for i in xrange(0, num_chunks):
+		missing = (chunksize * (i + 1)) - len(iterable)
+		start = (chunksize * i)
+		
+		if missing > 0:
+			end = len(iterable)
+		else:
+			end = (chunksize * (i + 1))
+		
+		result.append((iterable[start:end]))
+	
+	return result
+
+def render_index(email_list, title, identifier):
+	new_list = []
+	
+	for message in email_list:
+		new_list.append((message[0], message[0]))
+		
+	new_list = chunk(new_list, 4)
+	
 
 if os.path.isfile(options['database']) == False:
 	print "Database file not found. Use the -d switch to specify a custom database path."
@@ -134,9 +160,11 @@ for message_id, sender, recipient, subject, timestamp, textbody, htmlbody, sha1_
 
 # Sort by timestamp, ascending
 sorted_list = sorted(email_list, key=lambda email: email[6].lower())
+render_index(sorted_list, "Sorted from old to new", "date_asc")
 
 # Sort by timestamp, descending
 sorted_list.reverse()
+render_index(sorted_list, "Sorted from old to new", "date_desc")
 
 # Sort by sender, ascending
 sorted_list = sorted(email_list, key=lambda email: email[3].lower())
