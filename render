@@ -233,6 +233,8 @@ sorted_list.reverse()
 render_index(sorted_list, "Sorted by subject, descending", "subject_desc")
 
 shutil.copy('%s/style.css' % options['template_dir'], '%s/style.css' % options['output_dir'])
+shutil.copy('%s/up.png' % options['template_dir'], '%s/up.png' % options['output_dir'])
+shutil.copy('%s/down.png' % options['template_dir'], '%s/down.png' % options['output_dir'])
 
 if originals_available == True:
 	# Copy all original email messages into a subfolder of the output directory
