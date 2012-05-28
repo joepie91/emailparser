@@ -184,7 +184,7 @@ for email_file in file_list:
 			
 			for attachment in attachment_list:
 				if options['forced'] == False:
-					cursor.execute("SELECT * FROM attachments WHERE `Hash` = ?", (attachment[2],))
+					cursor.execute("SELECT * FROM attachments WHERE `hash` = ? AND `message_hash` = ?", (attachment[2], sha1_hash))
 					if len(cursor.fetchall()) > 0:
 						print "Skipping attachment %s, already exists in the database." % attachment[2]
 						continue
