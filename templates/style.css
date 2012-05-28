@@ -81,6 +81,26 @@ table.message > tbody > tr > th
 	color: white;
 }
 
+table.message-list th.hash
+{
+	width: 320px;
+}
+
+table.message-list th.from
+{
+	width: 20%;
+}
+
+table.message-list th.to
+{
+	width: 15%;
+}
+
+table.message-list th.date
+{
+	width: 15%;
+}
+
 table td.body
 {
 	border: 2px solid #313131;
