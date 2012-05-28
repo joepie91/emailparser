@@ -180,6 +180,9 @@ for email_file in file_list:
 		except UnicodeDecodeError:
 			print "ERROR: Failed parsing %s, headers could not be decoded." % sha1_hash
 			continue
+		except email.errors.HeaderParseError:
+			print "ERROR: Failed parsing %s, headers could not be parsed." % sha1_hash
+			continue
 		
 		cursor.execute("INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_row)
 		print "Successfully parsed and inserted e-mail with SHA1 hash %s." % sha1_hash
