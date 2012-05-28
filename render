@@ -178,7 +178,7 @@ render_index(sorted_list, "Sorted from old to new", "date_asc")
 
 # Sort by timestamp, descending
 sorted_list.reverse()
-render_index(sorted_list, "Sorted from old to new", "date_desc")
+render_index(sorted_list, "Sorted from new to old", "date_desc")
 
 # Sort by sender, ascending
 sorted_list = sorted(email_list, key=lambda email: email[3].lower())
