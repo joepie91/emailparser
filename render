@@ -160,7 +160,11 @@ for message_id, sender, recipient, subject, unixtime, textbody, htmlbody, sha1_h
 	if originals_available:
 		versions['Original'] = '../original/%s.eml' % sha1_hash
 	
-	version_list = "".join('<a href="%s" class="version">%s</a>' % (value, key) for key, value in versions.viewitems())
+	try:
+		version_list = "".join('<a href="%s" class="version">%s</a>' % (value, key) for key, value in versions.viewitems())
+	except AttributeError:
+		print "The dict.viewitems() function is not available on your system; you are most likely using a Python version older than 2.7."
+		exit(1)
 	
 	if available_text == True:
 		# Text version
