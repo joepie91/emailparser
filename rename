@@ -1,0 +1,81 @@
+#!/usr/bin/python
+
+import os, argparse, hashlib, email, email.header, email.utils, glob
+
+parser = argparse.ArgumentParser(description='Parses emails into an SQLite database and an attachment folder.')
+
+parser.add_argument('-p', dest='pattern', action='store', default='*',
+                   help='glob pattern (including path) that has to be matched for a file to be parsed')
+
+args = parser.parse_args()
+options = vars(args)
+
+def getheader(header_text, default="ascii"):
+	headers = email.header.decode_header(header_text)
+	try:
+		header_sections = [unicode(text, charset or default) for text, charset in headers]
+	except UnicodeDecodeError:
+		header_sections = [unicode(text, 'windows-1252') for text, charset in headers]
+	except LookupError:
+		return u""
+	
+	return u"".join(header_sections)
+	
+def find_submessages(message):
+	if message.is_multipart():
+		return [find_submessages(part) for part in message.get_payload()]
+	else:
+		return message
+
+def flatten(x):
+	# http://kogs-www.informatik.uni-hamburg.de/~meine/python_tricks
+	result = []
+	for el in x:
+		if hasattr(el, "__iter__") and not isinstance(el, basestring):
+			result.extend(flatten(el))
+		else:
+			result.append(el)
+	return result
+
+def get_charset(part):
+	charset = None
+	
+	if part.get_content_charset():
+		charset = part.get_content_charset()
+	elif part.get_charset():
+		charset = part.get_charset()
+	
+	if charset is None or charset == "default" or charset.startswith("us-ascii"):
+		return "ascii"
+	else:
+		return charset
+
+# Select all files matching the given pattern
+file_list = glob.glob(options['pattern'])
+
+finished = 0
+
+for email_file in file_list:
+	# To save time when updating a database, let's first check whether the filename is already present in the database as a hash.
+	# There is no need to check for the format here, since if the filename is not a valid hash, it simply won't match anything.
+	
+	message = email.message_from_file(open(email_file, 'r'))
+	
+	if message['message-id'] is None:
+		print "%s is not a valid e-mail file." % email_file
+	else:
+		if 'subject' not in message or message['subject'] is None:
+			subject = ""
+		else:
+			subject = message['subject']
+		
+		sha1_hash = hashlib.sha1("%s/%s/%s/%s" % (message['from'], message['to'], message['message-id'], subject)).hexdigest()
+		
+		new_path = "%s/%s.eml" % (os.path.dirname(email_file), sha1_hash)
+		
+		os.rename(email_file, new_path)
+		print "%s -> %s" % (email_file, new_path)
+		
+	finished += 1
+	
+print "Renamed %d files." % finished
