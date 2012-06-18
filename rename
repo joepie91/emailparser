@@ -7,6 +7,9 @@ parser = argparse.ArgumentParser(description='Parses emails into an SQLite datab
 parser.add_argument('-p', dest='pattern', action='store', default='*',
                    help='glob pattern (including path) that has to be matched for a file to be parsed')
 
+parser.add_argument('-I', '--ignore-invalid', dest='ignore_invalid', action='store_true',
+                   help='process invalid e-mail files anyway, for example when missing message-id headers')
+
 args = parser.parse_args()
 options = vars(args)
 
@@ -60,21 +63,29 @@ for email_file in file_list:
 	# There is no need to check for the format here, since if the filename is not a valid hash, it simply won't match anything.
 	
 	message = email.message_from_file(open(email_file, 'r'))
-	
+
 	if message['message-id'] is None:
-		print "%s is not a valid e-mail file." % email_file
-	else:
-		if 'subject' not in message or message['subject'] is None:
-			subject = ""
+		if options['ignore_invalid'] == True:
+			message_id = ""
+			print "WARNING: %s does not contain a valid message-id header. Empty message-id assumed." % email_file
 		else:
-			subject = message['subject']
-		
-		sha1_hash = hashlib.sha1("%s/%s/%s/%s" % (message['from'], message['to'], message['message-id'], subject)).hexdigest()
-		
-		new_path = "%s/%s.eml" % (os.path.dirname(email_file), sha1_hash)
-		
-		os.rename(email_file, new_path)
-		print "%s -> %s" % (email_file, new_path)
+			print "%s is not a valid e-mail file." % email_file
+			finished += 1
+			continue
+	else:
+		message_id = message['message-id']
+	
+	if 'subject' not in message or message['subject'] is None:
+		subject = ""
+	else:
+		subject = message['subject']
+	
+	sha1_hash = hashlib.sha1("%s/%s/%s/%s" % (message['from'], message['to'], message_id, subject)).hexdigest()
+	
+	new_path = "%s/%s.eml" % (os.path.dirname(email_file), sha1_hash)
+	
+	os.rename(email_file, new_path)
+	print "%s -> %s" % (email_file, new_path)
 		
 	finished += 1
 	

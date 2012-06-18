@@ -15,6 +15,9 @@ parser.add_argument('-a', dest='attachment_dir', action='store', default='attach
                    
 parser.add_argument('-f', '--forced', dest='forced', action='store_true',
                    help='force insertion into database, even if entries already exist')
+                   
+parser.add_argument('-I', '--ignore-invalid', dest='ignore_invalid', action='store_true',
+                   help='process invalid e-mail files anyway, for example when missing message-id headers')
 
 args = parser.parse_args()
 options = vars(args)
@@ -100,112 +103,120 @@ for email_file in file_list:
 	message = email.message_from_file(open(email_file, 'r'))
 	
 	if message['message-id'] is None:
-		print "%s is not a valid e-mail file." % email_file
-	else:
-		if 'subject' not in message or message['subject'] is None:
-			subject = ""
+		if options['ignore_invalid'] == True:
+			message_id = ""
+			print "WARNING: %s does not contain a valid message-id header. Empty message-id assumed." % email_file
 		else:
-			subject = message['subject']
+			print "%s is not a valid e-mail file." % email_file
+			finished += 1
+			continue
+	else:
+		message_id = message['message-id']
 		
-		textbody = ""
-		htmlbody = ""
-		attachment_list = []
-		
-		sha1_hash = hashlib.sha1("%s/%s/%s/%s" % (message['from'], message['to'], message['message-id'], subject)).hexdigest()
-		
-		if options['forced'] == False:
-			cursor.execute("SELECT * FROM emails WHERE `Hash` = ?", (sha1_hash,))
-			if len(cursor.fetchall()) > 0:
-				print "Skipping %s, already exists in the database according to message hash." % sha1_hash
-				continue
-			
-		message_parts = [find_submessages(message)]
-		message_parts = flatten(message_parts)
-		
-		for part in message_parts:
-			if part.get_filename() is None:
-				# Part of the message
-				if part.get_content_type() == "text/plain":
-					if textbody == "":
-						try:
-							textbody = part.get_payload(decode=True).decode(get_charset(part))
-						except UnicodeDecodeError:
-							# This part is probably in windows-1252 encoding
-							try:
-								textbody = part.get_payload(decode=True).decode('windows-1252')
-							except UnicodeDecodeError:
-								# Ok, we really have no clue how to decode this, we'll just skip it...
-								continue
-						except LookupError:
-							pass
-				elif part.get_content_type() == "text/html" or part.get_content_type == "text/xhtml+xml" or part.get_content_type == "application/xhtml+xml":
-					if htmlbody == "":
-						try:
-							htmlbody = part.get_payload(decode=True).decode(get_charset(part))
-						except UnicodeDecodeError:
-							# This part is probably in windows-1252 encoding
-							try:
-								htmlbody = part.get_payload(decode=True).decode('windows-1252')
-							except UnicodeDecodeError:
-								# Ok, we really have no clue how to decode this, we'll just skip it...
-								continue
-						except LookupError:
-							pass
-				else:
-					# Technically this is supposed to be part of the message body, but we have no idea what format it is in...
-					print "WARNING: Unknown message format encountered in %s, message may be incomplete." % sha1_hash
-			else:
-				# Attachment
-				attachment_data = part.get_payload(decode=True)
-				attachment_sha1 = hashlib.sha1(attachment_data).hexdigest()
-				attachment_filename = part.get_filename()
-				attachment_type = part.get_content_type()
-				attachment_extension = os.path.splitext(attachment_filename)[1]
-				attachment_size = len(attachment_data)
-				attachment_destination = "%s/%s%s" % (options['attachment_dir'], attachment_sha1, attachment_extension)
-				attachment_list.append((attachment_filename, attachment_type, attachment_sha1, attachment_size))
-				
-				attachment_file = open(attachment_destination, "w")
-				attachment_file.write(attachment_data)
-				attachment_file.close()
-		
-		try:
-			timestamp = int(time.mktime(email.utils.parsedate(message['date'])))
-		except TypeError:
-			timestamp = 0
-			print "WARNING: Failed to determine unix timestamp for %s." % sha1_hash
+	if 'subject' not in message or message['subject'] is None:
+		subject = ""
+	else:
+		subject = message['subject']
 	
-		try:
-			new_row = (getheader(message['message-id']), getheader(message['from']), getheader(message['to']), getheader(subject), timestamp, textbody, htmlbody, sha1_hash)
-		except UnicodeDecodeError:
-			print "ERROR: Failed parsing %s, headers could not be decoded." % sha1_hash
-			continue
-		except email.errors.HeaderParseError:
-			print "ERROR: Failed parsing %s, headers could not be parsed." % sha1_hash
+	textbody = ""
+	htmlbody = ""
+	attachment_list = []
+	
+	sha1_hash = hashlib.sha1("%s/%s/%s/%s" % (message['from'], message['to'], message_id, subject)).hexdigest()
+	
+	if options['forced'] == False:
+		cursor.execute("SELECT * FROM emails WHERE `Hash` = ?", (sha1_hash,))
+		if len(cursor.fetchall()) > 0:
+			print "Skipping %s, already exists in the database according to message hash." % sha1_hash
 			continue
 		
-		cursor.execute("INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_row)
-		print "Successfully parsed and inserted e-mail with SHA1 hash %s." % sha1_hash
+	message_parts = [find_submessages(message)]
+	message_parts = flatten(message_parts)
+	
+	for part in message_parts:
+		if part.get_filename() is None:
+			# Part of the message
+			if part.get_content_type() == "text/plain":
+				if textbody == "":
+					try:
+						textbody = part.get_payload(decode=True).decode(get_charset(part))
+					except UnicodeDecodeError:
+						# This part is probably in windows-1252 encoding
+						try:
+							textbody = part.get_payload(decode=True).decode('windows-1252')
+						except UnicodeDecodeError:
+							# Ok, we really have no clue how to decode this, we'll just skip it...
+							continue
+					except LookupError:
+						pass
+			elif part.get_content_type() == "text/html" or part.get_content_type == "text/xhtml+xml" or part.get_content_type == "application/xhtml+xml":
+				if htmlbody == "":
+					try:
+						htmlbody = part.get_payload(decode=True).decode(get_charset(part))
+					except UnicodeDecodeError:
+						# This part is probably in windows-1252 encoding
+						try:
+							htmlbody = part.get_payload(decode=True).decode('windows-1252')
+						except UnicodeDecodeError:
+							# Ok, we really have no clue how to decode this, we'll just skip it...
+							continue
+					except LookupError:
+						pass
+			else:
+				# Technically this is supposed to be part of the message body, but we have no idea what format it is in...
+				print "WARNING: Unknown message format encountered in %s, message may be incomplete." % sha1_hash
+		else:
+			# Attachment
+			attachment_data = part.get_payload(decode=True)
+			attachment_sha1 = hashlib.sha1(attachment_data).hexdigest()
+			attachment_filename = part.get_filename()
+			attachment_type = part.get_content_type()
+			attachment_extension = os.path.splitext(attachment_filename)[1]
+			attachment_size = len(attachment_data)
+			attachment_destination = "%s/%s%s" % (options['attachment_dir'], attachment_sha1, attachment_extension)
+			attachment_list.append((attachment_filename, attachment_type, attachment_sha1, attachment_size))
+			
+			attachment_file = open(attachment_destination, "w")
+			attachment_file.write(attachment_data)
+			attachment_file.close()
+	
+	try:
+		timestamp = int(time.mktime(email.utils.parsedate(message['date'])))
+	except TypeError:
+		timestamp = 0
+		print "WARNING: Failed to determine unix timestamp for %s." % sha1_hash
+
+	try:
+		new_row = (getheader(message_id), getheader(message['from']), getheader(message['to']), getheader(subject), timestamp, textbody, htmlbody, sha1_hash)
+	except UnicodeDecodeError:
+		print "ERROR: Failed parsing %s, headers could not be decoded." % sha1_hash
+		continue
+	except email.errors.HeaderParseError:
+		print "ERROR: Failed parsing %s, headers could not be parsed." % sha1_hash
+		continue
+	
+	cursor.execute("INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_row)
+	print "Successfully parsed and inserted e-mail with SHA1 hash %s." % sha1_hash
+	
+	if len(attachment_list) > 0:
+		inserted = 0
 		
-		if len(attachment_list) > 0:
-			inserted = 0
+		for attachment in attachment_list:
+			if options['forced'] == False:
+				cursor.execute("SELECT * FROM attachments WHERE `hash` = ? AND `message_hash` = ?", (attachment[2], sha1_hash))
+				if len(cursor.fetchall()) > 0:
+					print "Skipping attachment %s, already exists in the database." % attachment[2]
+					continue
 			
-			for attachment in attachment_list:
-				if options['forced'] == False:
-					cursor.execute("SELECT * FROM attachments WHERE `hash` = ? AND `message_hash` = ?", (attachment[2], sha1_hash))
-					if len(cursor.fetchall()) > 0:
-						print "Skipping attachment %s, already exists in the database." % attachment[2]
-						continue
-				
-				try:
-					new_row = (sha1_hash, attachment[0], attachment[1], attachment[2], attachment[3])
-					cursor.execute("INSERT INTO attachments VALUES (?, ?, ?, ?, ?)", new_row)
-					inserted += 1
-				except sqlite3.ProgrammingError:
-					print "Inserting of attachment %s failed." % attachment[2]
-			
-			if inserted > 0:
-				print "Successfully inserted %d attachment(s) for %s." % (inserted, sha1_hash)
+			try:
+				new_row = (sha1_hash, attachment[0], attachment[1], attachment[2], attachment[3])
+				cursor.execute("INSERT INTO attachments VALUES (?, ?, ?, ?, ?)", new_row)
+				inserted += 1
+			except sqlite3.ProgrammingError:
+				print "Inserting of attachment %s failed." % attachment[2]
+		
+		if inserted > 0:
+			print "Successfully inserted %d attachment(s) for %s." % (inserted, sha1_hash)
 				
 	finished += 1
 	
