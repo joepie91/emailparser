@@ -66,8 +66,8 @@ for email_file in file_list:
 
 	if message['message-id'] is None:
 		if options['ignore_invalid'] == True:
-			message_id = ""
-			print "WARNING: %s does not contain a valid message-id header. Empty message-id assumed." % email_file
+			message_id = message['date']
+			print "WARNING: %s does not contain a valid message-id header. Falling back to date." % email_file
 		else:
 			print "%s is not a valid e-mail file." % email_file
 			finished += 1
