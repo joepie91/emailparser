@@ -1,0 +1,33 @@
+#!/usr/bin/python
+
+import os, argparse, email, mailbox
+
+parser = argparse.ArgumentParser(description='Splits an mbox file into eml files.')
+
+parser.add_argument('mbox_files', metavar='file', type=str, nargs='+',
+                   help='the mbox files to parse')
+
+args = parser.parse_args()
+options = vars(args)
+
+for mbox in options['mbox_files']:
+	file_number = 1
+	
+	try:
+		os.makedirs("%s/extracted/%s" % (os.path.dirname(mbox), os.path.basename(mbox)))
+	except OSError:
+		pass
+	
+	try:
+		box = mailbox.UnixMailbox(open(mbox, "rb"), email.message_from_file)
+	except Exception, e:
+		print e
+		print "Error encountered while processing %s" % mbox
+	else:
+		for message in box:
+			filename = "%s/extracted/%s/%d.eml" % (os.path.dirname(mbox), os.path.basename(mbox), file_number)
+			fl = open(filename, "w")
+			fl.write(message.as_string())
+			fl.close()
+			print "%s - %s" % (filename, message["Subject"])
+			file_number += 1
